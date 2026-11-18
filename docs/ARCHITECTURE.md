@@ -150,7 +150,7 @@ Predefined zones, no map API. Each zone belongs to a corridor:
 
 Example: Nusrat (Banani to Mohakhali) and Rafiq (Banani to Gulshan 1) share a pickup zone and both destinations are NORTH_EAST, so they match. Shirin asking for Banani to Dhanmondi would not match.
 
-**Distances** come from a fixed zone-to-zone table (assumed road km), so fares can be calculated by hand. Two pairs used in the examples: Banani to Mohakhali = 3 km, Banani to Gulshan 1 = 4 km. The full table lives in `server/src/config/zones.js`.
+**Distances** come from a fixed zone-to-zone table (assumed road km), so fares can be calculated by hand. Two pairs used in the examples: Banani to Mohakhali = 3 km, Banani to Gulshan 1 = 1 km. The full table lives in `server/src/config/zones.js`.
 
 ## 6. Fare model
 
@@ -170,7 +170,7 @@ Constants: `baseFare = 6000` paisa (60 taka), `perKm = 2000` paisa (20 taka), `p
 | | Distance | Subtotal | Discount | Pooled fare | Solo fare |
 | --- | --- | --- | --- | --- | --- |
 | Nusrat | 3 km | 6000 + 3x2000 = 12000 | 3000 | **9000** (90 taka) | 12000 |
-| Rafiq | 4 km | 6000 + 4x2000 = 14000 | 3500 | **10500** (105 taka) | 14000 |
+| Rafiq | 1 km | 6000 + 1x2000 = 8000 | 2000 | **6000** (60 taka) | 8000 |
 
 The estimate shown at request time is the solo fare plus a note that pooling can reduce it. Fares are recalculated whenever pool membership changes before STARTED (for example if Rafiq cancels, Nusrat's discount is removed) and are **frozen at STARTED**.
 
