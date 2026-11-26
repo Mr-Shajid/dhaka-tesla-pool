@@ -6,8 +6,15 @@ async function registerUser(person) {
   return { token: res.body.token, user: res.body.user };
 }
 
+async function loginUser(person) {
+  const res = await request(app)
+    .post('/api/auth/login')
+    .send({ email: person.email, password: person.password });
+  return { token: res.body.token, user: res.body.user };
+}
+
 function authHeader(token) {
   return { Authorization: `Bearer ${token}` };
 }
 
-module.exports = { registerUser, authHeader };
+module.exports = { registerUser, loginUser, authHeader };
