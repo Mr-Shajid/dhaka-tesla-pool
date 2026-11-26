@@ -6,6 +6,7 @@ const { BOOKING_STATUS, ACTIVE_BOOKING_STATUSES } = require('../constants/status
 const { getDistanceKm } = require('../config/zones');
 const { calculateFare } = require('../services/fare.service');
 const { validateBookingInput } = require('../validators/booking.validators');
+const { autoMatchBooking, cancelPassengerBooking } = require('../services/pooling.service');
 
 function serializeBooking(booking) {
   return {
@@ -95,7 +96,10 @@ async function createBooking(req, res) {
     actorId: req.user._id,
   });
 
-  res.status(201).json({ booking: serializeBooking(booking) });
+  const matched = await autoMatchBooking(booking);
+  const result = matched ? matched.booking : booking;
+
+  res.status(201).json({ booking: serializeBooking(result) });
 }
 
 async function listMyBookings(req, res) {
@@ -113,22 +117,14 @@ async function cancelBooking(req, res) {
   const existing = await findOwnBooking(req);
   if (!existing) throw httpError(404, 'Booking not found');
 
-  // Atomic: cancels only if it is still REQUESTED at this exact moment.
-  const cancelled = await Booking.findOneAndUpdate(
-    { _id: existing._id, passengerId: req.user._id, status: BOOKING_STATUS.REQUESTED },
-    { status: BOOKING_STATUS.CANCELLED },
-    { new: true }
-  );
-  if (!cancelled) {
-    throw httpError(409, `A ride that is ${existing.status} cannot be cancelled`);
-  }
-
-  await RideEvent.create({
-    bookingId: cancelled._id,
-    fromStatus: BOOKING_STATUS.REQUESTED,
-    toStatus: BOOKING_STATUS.CANCELLED,
-    actorId: req.user._id,
+  const cancelled = await cancelPassengerBooking({
+    bookingId: existing._id,
+    passengerId: req.user._id,
   });
+  if (!cancelled) {
+    const latest = await Booking.findById(existing._id);
+    throw httpError(409, `A ride that is ${latest.status} cannot be cancelled`);
+  }
 
   res.json({ booking: serializeBooking(cancelled) });
 }
